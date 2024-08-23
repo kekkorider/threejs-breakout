@@ -23,8 +23,11 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { useGameStore } from '@/stores/game'
 import { useGSAP } from '@/composables/useGSAP'
 
+import { physics } from '@/assets/js/physics/simulation'
+import { Box, Floor, Debug as PhysicsDebug } from '@/assets/js/physics'
+
 const canvasRef = shallowRef(null)
-let scene, camera, renderer, mesh, controls
+let scene, camera, renderer, mesh, controls, physicsDebug
 
 const { width: windowWidth, height: windowHeight } = useWindowSize()
 const { pixelRatio: dpr } = useDevicePixelRatio()
@@ -42,7 +45,12 @@ onMounted(async () => {
 	createCamera()
 	createRenderer()
 
+	await physics.init()
+
 	createMesh()
+	createFloor()
+
+	physicsDebug = new PhysicsDebug(scene)
 
 	createControls()
 
@@ -70,8 +78,9 @@ watch([windowWidth, windowHeight], value => {
 // Methods
 //
 function updateScene(time = 0) {
+	physics.update()
+	physicsDebug.update()
 	controls.update()
-	mesh.rotation.set(time * 0.2, time * 0.13, time * 0.17)
 }
 
 function createScene() {
@@ -105,11 +114,26 @@ function createControls() {
 }
 
 function createMesh() {
-	const geometry = new BoxGeometry()
+	const geometry = new BoxGeometry(1.3, 1, 1.7)
 	const material = new MeshBasicMaterial({ color: 0x00ff00 })
-	mesh = new Mesh(geometry, material)
+	const box = new Mesh(geometry, material)
 
-	scene.add(mesh)
+	box.position.y = 1.5
+	box.rotation.set(Math.PI * 0.1, 0, Math.PI * 0.24)
+
+	scene.add(box)
+	new Box(box)
+}
+
+function createFloor() {
+	const geometry = new BoxGeometry(10, 0.1, 10)
+	const material = new MeshBasicMaterial({ color: 0x0000ff })
+	const floor = new Mesh(geometry, material)
+
+	floor.position.y = -3
+
+	scene.add(floor)
+	new Floor(floor)
 }
 </script>
 
