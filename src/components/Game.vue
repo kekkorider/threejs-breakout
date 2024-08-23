@@ -9,7 +9,7 @@
 
 <script setup>
 import { shallowRef, onMounted, nextTick, watch } from 'vue'
-import { useWindowSize, useDevicePixelRatio } from '@vueuse/core'
+import { useWindowSize, useDevicePixelRatio, useMagicKeys } from '@vueuse/core'
 import {
 	Scene,
 	PerspectiveCamera,
@@ -24,12 +24,13 @@ import { useGameStore } from '@/stores/game'
 import { useGSAP } from '@/composables/useGSAP'
 
 import { physics } from '@/assets/js/physics/simulation'
-import { Box, Floor, Debug as PhysicsDebug } from '@/assets/js/physics'
+import { Box, Floor, Debug as PhysicsDebug, Player } from '@/assets/js/physics'
 
 const canvasRef = shallowRef(null)
-let scene, camera, renderer, mesh, controls, physicsDebug
+let scene, camera, renderer, mesh, controls, physicsDebug, playerBody
 
 const { width: windowWidth, height: windowHeight } = useWindowSize()
+const { left: leftKey, a: aKey, right: rightKey, d: dKey } = useMagicKeys()
 const { pixelRatio: dpr } = useDevicePixelRatio()
 
 const gameStore = useGameStore()
@@ -47,8 +48,9 @@ onMounted(async () => {
 
 	await physics.init()
 
-	createMesh()
+	// createMesh()
 	createFloor()
+	createPlayer()
 
 	physicsDebug = new PhysicsDebug(scene)
 
@@ -63,10 +65,6 @@ onMounted(async () => {
 //
 // Watchers
 //
-watch(dpr, value => {
-	renderer.setPixelRatio(value)
-})
-
 watch([windowWidth, windowHeight], value => {
 	camera.aspect = value[0] / value[1]
 	camera.updateProjectionMatrix()
@@ -78,6 +76,11 @@ watch([windowWidth, windowHeight], value => {
 // Methods
 //
 function updateScene(time = 0) {
+	const left = leftKey.value || aKey.value ? 1 : 0
+	const right = rightKey.value || dKey.value ? 1 : 0
+
+	playerBody.body.setLinvel({ x: (right - left) * 4, y: 0, z: 0 }, true)
+
 	physics.update()
 	physicsDebug.update()
 	controls.update()
@@ -94,7 +97,7 @@ function createCamera() {
 		0.1,
 		100
 	)
-	camera.position.set(0, 0, 5)
+	camera.position.set(0, -0.5, 6)
 }
 
 function createRenderer() {
@@ -111,6 +114,18 @@ function createRenderer() {
 function createControls() {
 	controls = new OrbitControls(camera, renderer.domElement)
 	controls.enableDamping = true
+}
+
+function createPlayer() {
+	const geometry = new BoxGeometry(5, 0.6, 0.6)
+	const material = new MeshBasicMaterial({ color: 0xffff00 })
+	const player = new Mesh(geometry, material)
+
+	player.position.y = -2.5
+	player.position.z = 2
+
+	scene.add(player)
+	playerBody = new Player(player)
 }
 
 function createMesh() {
