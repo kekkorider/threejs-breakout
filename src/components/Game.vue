@@ -26,6 +26,8 @@ import { useGSAP } from '@/composables/useGSAP'
 import { physics } from '@/assets/js/physics/simulation'
 import { Box, Floor, Debug as PhysicsDebug, Player } from '@/assets/js/physics'
 
+import { playerMaterial } from '@/assets/materials/Player'
+
 const canvasRef = shallowRef(null)
 let scene, camera, renderer, mesh, controls, physicsDebug, playerBody
 
@@ -117,8 +119,8 @@ function createControls() {
 }
 
 function createPlayer() {
-	const geometry = new BoxGeometry(5, 0.6, 0.6)
-	const material = new MeshBasicMaterial({ color: 0xffff00 })
+	const geometry = new BoxGeometry(5, 0.6, 1.6)
+	const material = playerMaterial
 	const player = new Mesh(geometry, material)
 
 	player.position.y = -2.5
@@ -158,3 +160,4 @@ function createFloor() {
 	width: 100dvw;
 }
 </style>
+import { playerMaterial } from '../assets/materials/Player'
