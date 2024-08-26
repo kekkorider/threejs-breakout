@@ -11,7 +11,7 @@ export class Physics {
 
     let i
     for (i = 0; i < this.world.bodies.map.data.length; i++) {
-      const body = this.world.bodies.get(i)
+      const body = this.world.bodies.map.data[i]
       const pos = body.translation()
       const rot = body.rotation()
       const { mesh } = body.userData

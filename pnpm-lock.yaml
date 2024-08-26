@@ -23,6 +23,9 @@ importers:
       three:
         specifier: ^0.167.1
         version: 0.167.1
+      tweakpane:
+        specifier: ^4.0.4
+        version: 4.0.4
       vue:
         specifier: ^3.4.38
         version: 3.4.38
@@ -508,6 +511,9 @@ packages:
     resolution: {integrity: sha512-/OaKK0xYrs3DmxRYqL/yDc+FxFUVYhDlXMhRmv3z915w2HF1tnN1omB354j8VUGO/hbRzyD6Y3sA7v7GS/ceog==}
     engines: {node: '>=4'}
 
+  tweakpane@4.0.4:
+    resolution: {integrity: sha512-RkWD54zDlEbnN01wQPk0ANHGbdCvlJx/E8A1QxhTfCbX+ROWos1Ws2MnhOm39aUGMOh+36TjUwpDmLfmwTr1Fg==}
+
   uuid@10.0.0:
     resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
     hasBin: true
@@ -951,6 +957,8 @@ snapshots:
   three@0.167.1: {}
 
   to-fast-properties@2.0.0: {}
+
+  tweakpane@4.0.4: {}
 
   uuid@10.0.0: {}
 

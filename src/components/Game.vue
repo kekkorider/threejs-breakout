@@ -19,20 +19,47 @@ import {
 } from 'three'
 import { WebGPURenderer } from 'three/webgpu'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader'
+
+import { Pane } from 'tweakpane'
 
 import { useGameStore } from '@/stores/game'
 import { useGSAP } from '@/composables/useGSAP'
 
 import { physics } from '@/assets/js/physics/simulation'
-import { Box, Floor, Debug as PhysicsDebug, Player } from '@/assets/js/physics'
+import {
+	Box,
+	Floor,
+	Debug as PhysicsDebug,
+	Player,
+	GameField,
+} from '@/assets/js/physics'
 
-import { playerMaterial } from '@/assets/materials/Player'
+import { playerMaterial, timeScale } from '@/assets/materials/Player'
+import { gameFieldMaterial } from '@/assets/materials/GameField'
 
 const canvasRef = shallowRef(null)
-let scene, camera, renderer, mesh, controls, physicsDebug, playerBody
+let scene,
+	camera,
+	renderer,
+	mesh,
+	controls,
+	physicsDebug,
+	player,
+	playerBody,
+	ballPhysics
 
 const { width: windowWidth, height: windowHeight } = useWindowSize()
-const { left: leftKey, a: aKey, right: rightKey, d: dKey } = useMagicKeys()
+const {
+	left: leftKey,
+	a: aKey,
+	right: rightKey,
+	d: dKey,
+	up: upKey,
+	w: wKey,
+	down: downKey,
+	s: sKey,
+} = useMagicKeys()
 const { pixelRatio: dpr } = useDevicePixelRatio()
 
 const gameStore = useGameStore()
@@ -50,17 +77,27 @@ onMounted(async () => {
 
 	await physics.init()
 
-	// createMesh()
-	createFloor()
+	await loadModel()
+
 	createPlayer()
+	createBall()
 
 	physicsDebug = new PhysicsDebug(scene)
 
 	createControls()
 
+	createDebug()
+
 	gsap.ticker.add(time => {
 		updateScene(time)
 		renderer.renderAsync(scene, camera)
+	})
+
+	gsap.delayedCall(0.5, () => {
+		ballPhysics.rigidBody.setLinvel(
+			{ x: gsap.utils.random(-4, 4), y: 0, z: gsap.utils.random(-10, -15) },
+			true
+		)
 	})
 })
 
@@ -80,12 +117,40 @@ watch([windowWidth, windowHeight], value => {
 function updateScene(time = 0) {
 	const left = leftKey.value || aKey.value ? 1 : 0
 	const right = rightKey.value || dKey.value ? 1 : 0
+	const up = upKey.value || wKey.value ? 1 : 0
+	const down = downKey.value || sKey.value ? 1 : 0
 
-	playerBody.body.setLinvel({ x: (right - left) * 4, y: 0, z: 0 }, true)
+	playerBody.body.setLinvel(
+		{ x: (right - left) * 4, y: 0, z: (down - up) * 4 },
+		true
+	)
 
 	physics.update()
 	physicsDebug.update()
 	controls.update()
+}
+
+async function loadModel() {
+	const loader = new GLTFLoader()
+
+	loader.load('/game.glb', gltf => {
+		const gameField = gltf.scene.getObjectByName('Game_field')
+		gameField.material = gameFieldMaterial
+
+		scene.add(gameField)
+
+		const wallUp = gltf.scene.getObjectByName('Wall_UP')
+		const wallDown = gltf.scene.getObjectByName('Wall_DOWN')
+		const wallLeft = gltf.scene.getObjectByName('Wall_LEFT')
+		const wallRight = gltf.scene.getObjectByName('Wall_RIGHT')
+
+		new GameField(wallUp)
+		new GameField(wallDown)
+		new GameField(wallLeft)
+		new GameField(wallRight)
+
+		return Promise.resolve()
+	})
 }
 
 function createScene() {
@@ -99,7 +164,7 @@ function createCamera() {
 		0.1,
 		100
 	)
-	camera.position.set(0, -0.5, 6)
+	camera.position.set(0, 4, 12)
 }
 
 function createRenderer() {
@@ -119,38 +184,38 @@ function createControls() {
 }
 
 function createPlayer() {
-	const geometry = new BoxGeometry(5, 0.6, 1.6)
+	const geometry = new BoxGeometry(5, 0.6, 1)
 	const material = playerMaterial
-	const player = new Mesh(geometry, material)
+	player = new Mesh(geometry, material)
 
-	player.position.y = -2.5
-	player.position.z = 2
+	player.name = 'Player'
+
+	player.position.y = 0.75
+	player.position.z = 8
 
 	scene.add(player)
 	playerBody = new Player(player)
 }
 
-function createMesh() {
-	const geometry = new BoxGeometry(1.3, 1, 1.7)
+function createBall() {
+	const geometry = new BoxGeometry(0.5, 0.5, 0.5)
 	const material = new MeshBasicMaterial({ color: 0x00ff00 })
-	const box = new Mesh(geometry, material)
+	const ball = new Mesh(geometry, material)
 
-	box.position.y = 1.5
-	box.rotation.set(Math.PI * 0.1, 0, Math.PI * 0.24)
+	ball.name = 'Ball'
 
-	scene.add(box)
-	new Box(box)
+	ball.position.x = 0
+	ball.position.y = 0.75
+	ball.position.z = 5
+
+	scene.add(ball)
+	ballPhysics = new Box(ball)
 }
 
-function createFloor() {
-	const geometry = new BoxGeometry(10, 0.1, 10)
-	const material = new MeshBasicMaterial({ color: 0x0000ff })
-	const floor = new Mesh(geometry, material)
+function createDebug() {
+	const pane = new Pane()
 
-	floor.position.y = -3
-
-	scene.add(floor)
-	new Floor(floor)
+	pane.addBinding(timeScale, 'value', { label: 'timeScale', min: 0, max: 20 })
 }
 </script>
 
@@ -160,4 +225,4 @@ function createFloor() {
 	width: 100dvw;
 }
 </style>
-import { playerMaterial } from '../assets/materials/Player'
+import { random } from 'gsap'

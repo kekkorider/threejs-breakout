@@ -42,6 +42,10 @@ export class Player {
     }
 
     const colliderDesc = RAPIER.ColliderDesc.cuboid(meshSize.x, meshSize.y, meshSize.z)
+    colliderDesc.setFriction(0)
+    colliderDesc.setRestitution(1)
+    // colliderDesc.setRestitutionCombineRule(3)
+
     world.createCollider(colliderDesc, this.body)
   }
 }
