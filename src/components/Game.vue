@@ -32,11 +32,11 @@ import {
 	Floor,
 	Debug as PhysicsDebug,
 	Player,
-	GameField,
+	Wall,
 } from '@/assets/js/physics'
 
 import { playerMaterial, timeScale } from '@/assets/materials/Player'
-import { gameFieldMaterial } from '@/assets/materials/GameField'
+import { wallMaterial } from '@/assets/materials/Wall'
 
 const canvasRef = shallowRef(null)
 let scene,
@@ -50,16 +50,7 @@ let scene,
 	ballPhysics
 
 const { width: windowWidth, height: windowHeight } = useWindowSize()
-const {
-	left: leftKey,
-	a: aKey,
-	right: rightKey,
-	d: dKey,
-	up: upKey,
-	w: wKey,
-	down: downKey,
-	s: sKey,
-} = useMagicKeys()
+const { left: leftKey, a: aKey, right: rightKey, d: dKey } = useMagicKeys()
 const { pixelRatio: dpr } = useDevicePixelRatio()
 
 const gameStore = useGameStore()
@@ -115,15 +106,12 @@ watch([windowWidth, windowHeight], value => {
 // Methods
 //
 function updateScene(time = 0) {
-	const left = leftKey.value || aKey.value ? 1 : 0
-	const right = rightKey.value || dKey.value ? 1 : 0
-	const up = upKey.value || wKey.value ? 1 : 0
-	const down = downKey.value || sKey.value ? 1 : 0
-
-	playerBody.body.setLinvel(
-		{ x: (right - left) * 4, y: 0, z: (down - up) * 4 },
-		true
-	)
+	const position = playerBody.body.translation()
+	if (position.x >= -3 && position.x <= 3) {
+		const left = leftKey.value || aKey.value ? 1 : 0
+		const right = rightKey.value || dKey.value ? 1 : 0
+		playerBody.body.setLinvel({ x: (right - left) * 4, y: 0, z: 0 }, true)
+	}
 
 	physics.update()
 	physicsDebug.update()
@@ -135,7 +123,7 @@ async function loadModel() {
 
 	loader.load('/game.glb', gltf => {
 		const gameField = gltf.scene.getObjectByName('Game_field')
-		gameField.material = gameFieldMaterial
+		gameField.material = wallMaterial
 
 		scene.add(gameField)
 
@@ -144,10 +132,10 @@ async function loadModel() {
 		const wallLeft = gltf.scene.getObjectByName('Wall_LEFT')
 		const wallRight = gltf.scene.getObjectByName('Wall_RIGHT')
 
-		new GameField(wallUp)
-		new GameField(wallDown)
-		new GameField(wallLeft)
-		new GameField(wallRight)
+		new Wall(wallUp)
+		new Wall(wallDown)
+		new Wall(wallLeft)
+		new Wall(wallRight)
 
 		return Promise.resolve()
 	})
@@ -225,4 +213,4 @@ function createDebug() {
 	width: 100dvw;
 }
 </style>
-import { random } from 'gsap'
+log,

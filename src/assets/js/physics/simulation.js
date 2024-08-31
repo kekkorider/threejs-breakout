@@ -28,7 +28,7 @@ export class Physics {
   }
 
   #createWorld() {
-    const gravity = { x: 0, y: -9.81, z: 0 }
+    const gravity = { x: 0, y: 0, z: 0 }
     this.world = new this.RAPIER.World(gravity)
   }
 }

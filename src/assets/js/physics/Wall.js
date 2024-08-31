@@ -1,6 +1,6 @@
 import { physics } from './simulation'
 
-export class GameField {
+export class Wall {
   constructor(mesh) {
     this.mesh = mesh
 

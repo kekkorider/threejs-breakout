@@ -2,7 +2,7 @@ import { Debug } from './Debug'
 import { Box } from './Box'
 import { Player } from './Player'
 import { Floor } from './Floor'
-import { GameField } from './GameField'
+import { Wall } from './Wall'
 import { physics } from './simulation'
 
 export {
@@ -10,6 +10,6 @@ export {
   Box,
   Player,
   Floor,
-  GameField,
+  Wall,
   physics
 }
