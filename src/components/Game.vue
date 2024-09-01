@@ -14,8 +14,11 @@ import {
 	Scene,
 	PerspectiveCamera,
 	Mesh,
+	InstancedMesh,
 	BoxGeometry,
 	MeshBasicMaterial,
+	InstancedBufferAttribute,
+	Object3D,
 } from 'three'
 import { WebGPURenderer } from 'three/webgpu'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
@@ -29,6 +32,7 @@ import { useGSAP } from '@/composables/useGSAP'
 import { physics } from '@/assets/js/physics/simulation'
 import {
 	Box,
+	InstancedBlock,
 	Floor,
 	Debug as PhysicsDebug,
 	Player,
@@ -37,6 +41,7 @@ import {
 
 import { playerMaterial, timeScale } from '@/assets/materials/Player'
 import { wallMaterial } from '@/assets/materials/Wall'
+import { blockMaterial } from '@/assets/materials/block'
 
 const canvasRef = shallowRef(null)
 let scene,
@@ -56,6 +61,12 @@ const { pixelRatio: dpr } = useDevicePixelRatio()
 const gameStore = useGameStore()
 const { gsap } = useGSAP()
 
+const level = [
+	[1, 1, 1, 0, 0, 1, 1],
+	[0, 1, 0, 1, 1, 1, 0],
+	[1, 0, 1, 0, 0, 1, 1],
+]
+
 //
 // Lifecycle
 //
@@ -72,6 +83,7 @@ onMounted(async () => {
 
 	createPlayer()
 	createBall()
+	createBlocks()
 
 	physicsDebug = new PhysicsDebug(scene)
 
@@ -85,8 +97,9 @@ onMounted(async () => {
 	})
 
 	gsap.delayedCall(0.5, () => {
+		return
 		ballPhysics.rigidBody.setLinvel(
-			{ x: gsap.utils.random(-4, 4), y: 0, z: gsap.utils.random(-10, -15) },
+			{ x: gsap.utils.random(-5, 5), y: 0, z: gsap.utils.random(-12, -18) },
 			true
 		)
 	})
@@ -106,12 +119,9 @@ watch([windowWidth, windowHeight], value => {
 // Methods
 //
 function updateScene(time = 0) {
-	const position = playerBody.body.translation()
-	if (position.x >= -3 && position.x <= 3) {
-		const left = leftKey.value || aKey.value ? 1 : 0
-		const right = rightKey.value || dKey.value ? 1 : 0
-		playerBody.body.setLinvel({ x: (right - left) * 4, y: 0, z: 0 }, true)
-	}
+	const left = leftKey.value || aKey.value ? 1 : 0
+	const right = rightKey.value || dKey.value ? 1 : 0
+	playerBody.body.setLinvel({ x: (right - left) * 4, y: 0, z: 0 }, true)
 
 	physics.update()
 	physicsDebug.update()
@@ -200,6 +210,37 @@ function createBall() {
 	ballPhysics = new Box(ball)
 }
 
+function createBlocks() {
+	const dummy = new Object3D()
+
+	const size = 0.75
+	const geometry = new BoxGeometry(size, size, size)
+	const mesh = new InstancedMesh(geometry, blockMaterial, level.flat().length)
+
+	let row, col
+
+	const startX = (level[0].length - 2) * 0.5
+	const startZ = 8
+
+	for (row = 0; row < level.length; row++) {
+		for (col = 0; col < level[row].length; col++) {
+			const x = col - startX - 0.5
+			const y = level[row][col] === 0 ? -2 : 1
+			const z = row - startZ
+
+			dummy.position.set(x, y, z)
+			dummy.updateMatrix()
+
+			mesh.setMatrixAt(row * level[row].length + col, dummy.matrix)
+		}
+	}
+
+	mesh.instanceMatrix.needsUpdate = true
+
+	scene.add(mesh)
+	new InstancedBlock(mesh)
+}
+
 function createDebug() {
 	const pane = new Pane()
 
@@ -213,4 +254,3 @@ function createDebug() {
 	width: 100dvw;
 }
 </style>
-log,
