@@ -97,9 +97,8 @@ onMounted(async () => {
 	})
 
 	gsap.delayedCall(0.5, () => {
-		return
 		ballPhysics.rigidBody.setLinvel(
-			{ x: gsap.utils.random(-5, 5), y: 0, z: gsap.utils.random(-12, -18) },
+			{ x: gsap.utils.random(-10, 10), y: 0, z: gsap.utils.random(-12, -18) },
 			true
 		)
 	})
@@ -121,7 +120,7 @@ watch([windowWidth, windowHeight], value => {
 function updateScene(time = 0) {
 	const left = leftKey.value || aKey.value ? 1 : 0
 	const right = rightKey.value || dKey.value ? 1 : 0
-	playerBody.body.setLinvel({ x: (right - left) * 4, y: 0, z: 0 }, true)
+	playerBody.body.setLinvel({ x: (right - left) * 5, y: 0, z: 0 }, true)
 
 	physics.update()
 	physicsDebug.update()
@@ -160,7 +159,7 @@ function createCamera() {
 		75,
 		windowWidth.value / windowHeight.value,
 		0.1,
-		100
+		500
 	)
 	camera.position.set(0, 4, 12)
 }
@@ -204,7 +203,7 @@ function createBall() {
 
 	ball.position.x = 0
 	ball.position.y = 0.75
-	ball.position.z = 5
+	ball.position.z = 6.5
 
 	scene.add(ball)
 	ballPhysics = new Box(ball)
@@ -245,6 +244,22 @@ function createDebug() {
 	const pane = new Pane()
 
 	pane.addBinding(timeScale, 'value', { label: 'timeScale', min: 0, max: 20 })
+
+	const orthographic = { value: 0 }
+	pane
+		.addBinding(orthographic, 'value', { label: 'Ortographic', min: 0, max: 1 })
+		.on('change', event => {
+			const zoom = gsap.utils.mapRange(0, 1, 1, 20, event.value)
+			camera.zoom = zoom
+
+			const positionY = gsap.utils.mapRange(0, 1, 4, 20 * 4, event.value)
+			camera.position.y = positionY
+
+			const positionZ = gsap.utils.mapRange(0, 1, 12, 20 * 12, event.value)
+			camera.position.z = positionZ
+
+			camera.updateProjectionMatrix()
+		})
 }
 </script>
 
